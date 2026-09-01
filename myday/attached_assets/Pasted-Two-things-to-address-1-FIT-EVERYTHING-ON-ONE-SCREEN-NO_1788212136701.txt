@@ -1,0 +1,19 @@
+Two things to address:
+
+1. FIT EVERYTHING ON ONE SCREEN, NO SCROLLING
+The app currently requires scrolling to see everything. I want the entire calendar/day view to fit within the visible viewport at all times, and be responsive so it resizes cleanly to fit any window size (not a fixed pixel layout).
+- Use relative units (%, vh/vw, flexbox/grid with flex-grow) instead of fixed heights/widths wherever possible.
+- The Schedule panel and Tasks panel should each scroll independently within their own bounded area ONLY if their content genuinely overflows (e.g. a very busy day) — but the overall page/window itself should never need to scroll.
+- Test this by resizing the browser window smaller and larger — layout should adapt smoothly at multiple sizes, not just the current one.
+- Same rule applies to month view — it should always fit within the viewport, no page-level scrolling.
+
+2. PREPARE THE FULL APP TO BE PACKAGED AS A STANDALONE MAC APP (.dmg)
+I want to eventually export this as a fully self-contained, offline Mac desktop app — no separate backend server running, everything bundled into one app.
+- Convert the project to use Electron, with the Express backend logic either removed or converted into Electron's main process (using Node's built-in capabilities directly, not a running HTTP server).
+- Replace any backend API calls (fetch requests to localhost/Express routes) with direct local calls to the SQLite/JSON file via Electron's main process (using IPC between renderer and main process).
+- Make sure all data reads/writes work fully offline, no network calls required at any point.
+- Set up the project with electron-builder (or an equivalent) already configured to output a .dmg for macOS, so it's ready to package once I download the project.
+- Clean up and optimize the whole codebase for this transition: remove any dev-only tooling that won't be needed in the packaged version, minimize dependencies, and make sure there's no leftover reference to a local dev server URL anywhere in the code.
+- Give me the exact terminal commands I'll need to run once I download the project locally to build the final .dmg (e.g. npm install, npm run build, npx electron-builder --mac).
+
+Walk me through these changes step by step, and let me know once it's fully converted to Electron so I can test the responsive layout before we move to building the .dmg.

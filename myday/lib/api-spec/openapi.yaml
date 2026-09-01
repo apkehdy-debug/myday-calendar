@@ -1,0 +1,501 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: calendar
+    description: Calendar and daily planning operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /calendar:
+    get:
+      operationId: getCalendar
+      tags: [calendar]
+      summary: Get a month calendar summary
+      parameters:
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}$'
+      responses:
+        "200":
+          description: Calendar day summaries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CalendarDay"
+  /days/{date}:
+    get:
+      operationId: getDay
+      tags: [calendar]
+      summary: Get a day's events and tasks
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Day details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Day"
+  /tags:
+    get:
+      operationId: getTags
+      tags: [calendar]
+      summary: List saved tags
+      responses:
+        "200":
+          description: Saved tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tag"
+    post:
+      operationId: createTag
+      tags: [calendar]
+      summary: Create a saved tag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagInput"
+      responses:
+        "201":
+          description: Created tag
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tag"
+  /tags/{id}:
+    patch:
+      operationId: updateTag
+      tags: [calendar]
+      summary: Rename or recolor a saved tag
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagUpdate"
+      responses:
+        "200":
+          description: Updated tag
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tag"
+    delete:
+      operationId: deleteTag
+      tags: [calendar]
+      summary: Delete a saved tag
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Tag deleted
+  /events:
+    post:
+      operationId: createEvent
+      tags: [calendar]
+      summary: Create a timed event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventInput"
+      responses:
+        "201":
+          description: Created event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+  /events/{id}:
+    patch:
+      operationId: updateEvent
+      tags: [calendar]
+      summary: Update a timed event
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventUpdate"
+      responses:
+        "200":
+          description: Updated event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+    delete:
+      operationId: deleteEvent
+      tags: [calendar]
+      summary: Delete a timed event
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Event deleted
+  /tasks:
+    post:
+      operationId: createTask
+      tags: [calendar]
+      summary: Create a day task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+  /tasks/{id}:
+    patch:
+      operationId: updateTask
+      tags: [calendar]
+      summary: Update a task
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+    delete:
+      operationId: deleteTask
+      tags: [calendar]
+      summary: Delete a task
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Task deleted
+  /tasks/reorder:
+    post:
+      operationId: reorderTasks
+      tags: [calendar]
+      summary: Persist task ordering for a day
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskReorder"
+      responses:
+        "200":
+          description: Reordered tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+  /tasks/{id}/schedule:
+    post:
+      operationId: scheduleTask
+      tags: [calendar]
+      summary: Convert a task into a timed event
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleTaskInput"
+      responses:
+        "200":
+          description: Scheduled event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    CalendarDay:
+      type: object
+      required: [date, eventCount, taskCount, completedTaskCount, dueTaskCount, overdueTaskCount]
+      properties:
+        date:
+          type: string
+          format: date
+        eventCount:
+          type: number
+        taskCount:
+          type: number
+        completedTaskCount:
+          type: number
+        dueTaskCount:
+          type: number
+        overdueTaskCount:
+          type: number
+    Day:
+      type: object
+      required: [date, events, tasks]
+      properties:
+        date:
+          type: string
+          format: date
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/Event"
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+    Tag:
+      type: object
+      required: [id, name, color]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          minLength: 1
+          maxLength: 32
+        color:
+          type: string
+          enum: ["#d7d7d2", "#b7b8b4", "#979895", "#777875", "#5b5c59", "#3f403d"]
+    TagInput:
+      type: object
+      required: [name, color]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 32
+        color:
+          type: string
+          enum: ["#d7d7d2", "#b7b8b4", "#979895", "#777875", "#5b5c59", "#3f403d"]
+    TagUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 32
+        color:
+          type: string
+          enum: ["#d7d7d2", "#b7b8b4", "#979895", "#777875", "#5b5c59", "#3f403d"]
+    Event:
+      type: object
+      required: [id, date, title, startTime, endTime, color, tagIds]
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+          format: date
+        title:
+          type: string
+        startTime:
+          type: string
+          pattern: '^\d{2}:\d{2}$'
+        endTime:
+          type: string
+          pattern: '^\d{2}:\d{2}$'
+        notes:
+          type: ["string", "null"]
+        color:
+          type: string
+        sourceTaskId:
+          type: ["string", "null"]
+        tagIds:
+          type: array
+          items:
+            type: string
+    EventInput:
+      type: object
+      required: [date, title, startTime, endTime]
+      properties:
+        date:
+          type: string
+          format: date
+        title:
+          type: string
+          minLength: 1
+        startTime:
+          type: string
+          pattern: '^\d{2}:\d{2}$'
+        endTime:
+          type: string
+          pattern: '^\d{2}:\d{2}$'
+        notes:
+          type: string
+        color:
+          type: string
+        tagIds:
+          type: array
+          items:
+            type: string
+    EventUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        startTime:
+          type: string
+          pattern: '^\d{2}:\d{2}$'
+        endTime:
+          type: string
+          pattern: '^\d{2}:\d{2}$'
+        notes:
+          type: string
+        color:
+          type: string
+        tagIds:
+          type: array
+          items:
+            type: string
+    Task:
+      type: object
+      required: [id, date, title, completed, position, createdAt, scheduledEventId, dueDate, tagIds]
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+          format: date
+        title:
+          type: string
+        completed:
+          type: boolean
+        position:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        scheduledEventId:
+          type: ["string", "null"]
+        dueDate:
+          type: ["string", "null"]
+        tagIds:
+          type: array
+          items:
+            type: string
+    TaskInput:
+      type: object
+      required: [date, title]
+      properties:
+        date:
+          type: string
+          format: date
+        title:
+          type: string
+          minLength: 1
+        dueDate:
+          type: ["string", "null"]
+        tagIds:
+          type: array
+          items:
+            type: string
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        completed:
+          type: boolean
+        position:
+          type: number
+        dueDate:
+          type: ["string", "null"]
+        tagIds:
+          type: array
+          items:
+            type: string
+    TaskReorder:
+      type: object
+      required: [date, taskIds]
+      properties:
+        date:
+          type: string
+          format: date
+        taskIds:
+          type: array
+          items:
+            type: string
+    ScheduleTaskInput:
+      type: object
+      required: [startTime, endTime]
+      properties:
+        startTime:
+          type: string
+          pattern: '^\d{2}:\d{2}$'
+        endTime:
+          type: string
+          pattern: '^\d{2}:\d{2}$'
+        color:
+          type: string
+        tagIds:
+          type: array
+          items:
+            type: string
+

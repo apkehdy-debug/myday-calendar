@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "MyDay Calendar"
+description = "A focused personal calendar and to-do app for planning each day. Browse the month, open a day into a schedule and task split view, and turn tasks into timed events with drag and drop."
+version = "1.0.0"
+id = "artifacts/myday"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22414
+
+[services.development]
+run = "pnpm --filter @workspace/myday run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/myday", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/myday/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22414"
+BASE_PATH = "/"
